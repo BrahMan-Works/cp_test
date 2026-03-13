@@ -29,7 +29,7 @@ Example output:
 
 
 ACCEPTED
-Execution time: 1.88 ms
+Execution time: X ms
 
 
 ## Requirements
