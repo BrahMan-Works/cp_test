@@ -1,0 +1,14 @@
+# compiled binaries
+cp_test
+solution
+a.out
+
+# test outputs
+.cp-test/user_output.txt
+
+# build files
+*.o
+*.out
+
+# OS junk
+.DS_Store
