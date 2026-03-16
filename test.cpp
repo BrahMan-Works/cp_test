@@ -1,61 +1,56 @@
-#include<bits/stdc++.h>
-#define int long long
-using namespace std;
-int solve(){
-	int n;
-	cin >> n;
-	int a[n];
-	int c1=0,c2=0,flag=0;
-	for(int i=0;i<n;i++){
-		cin >> a[i];
-		if(a[i]==25){
-			c1++;
-		}
-		else if(a[i]==50){
-			if(c1>0){
-				c1--;
-				c2++;
-			}
-			else{
-				flag=1;
-			}
-		}
-		else{
-			int cur=0;
-			if(c2>0){
-				c2--;
-				cur = 1;
-			}
-			if(cur){
-				if(c1>0){
-					c1--;
-				}
-				else{
-					flag=1;
-				}
-			}
-			else{
-				if(c1>2){
-					c1 -= 3;
-				}
-				else{
-					flag=1;
-				}
-			}
-		}
-	}
-	if(flag){
-		cout << "NO\n";
-	}
-	else{
-		cout << "YES\n";
-	}
-	return 0;
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstdint>
+
+#define int int64_t
+
+//--------------Pacific_Hues--------------\\
+
+void solve() 
+{
+    int n; 
+    std::cin >> n;
+
+    auto a = std::vector<int>(n + 2, 0);
+    for(int i = 1; i <= n; ++i) 
+    {
+        std::cin >> a[i];
+    }
+
+    auto dp = std::vector<int>(n + 2, 0);
+    for(int i = n; i >= 1; --i) 
+    {
+        if(i & 1) 
+        {
+            int b = a[i];
+            if(i > 1) 
+            {
+                b = std::min(b, a[i - 1]);
+            }
+            if(i < n) 
+            {
+                b = std::min(b, a[i + 1] - dp[i + 2]);
+            }
+            dp[i] = std::max<int>(0, b);
+        }
+    }
+
+    int ans = 0;
+    for(int i = 1; i <= n; i += 2) 
+    {
+        ans += a[i] - dp[i];
+    }
+
+    std::cout << ans << '\n';
 }
-signed main(){
-	int t=1;
-	//cin >> t;
-	while(t--){
-		solve();
-	}
+
+signed main() 
+{
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int t; 
+    std::cin >> t;
+    while(t--) solve();
 }

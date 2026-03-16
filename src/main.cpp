@@ -25,6 +25,64 @@ std::string normalize(const std::string& text)
     return result;
 }
 
+std::string trim(const std::string& s)
+{
+    size_t start = s.find_first_not_of("\n\r\t");
+    size_t end = s.find_last_not_of("\n\r\t");
+
+    if (start == std::string::npos) return "";
+    return s.substr(start, end - start + 1);
+}
+
+void reportError(int total_tests, int test, int line)
+{
+    if(total_tests > 1)
+    {
+        std::cout << "Wrong answer at test case " << test << '\n';
+    }
+
+    std::cout << "Mismatch at line " << line << '\n';
+}
+
+int compare(const std::string& expected_path, const std::string& user_path)
+{
+    std::ifstream expected(expected_path);
+    std::ifstream user(user_path);
+
+    std::string e, u;
+    int line = 1;
+
+    while (true)
+    {
+        bool e_end = !getline(expected, e);
+        bool u_end = !getline(user, u);
+
+        if(e_end && u_end) return 0;
+
+        if(e != u) return line;
+        line++;
+    }
+}
+
+bool compareOutputs(const std::string& expected_path, const std::string& user_path) //useless for now
+{
+    std::ifstream expected(expected_path);
+    std::ifstream user(user_path);
+
+    std::string a, b;
+
+    while(true)
+    {
+        bool e = !(expected >> a);
+        bool u = !(user >> b);
+
+        if (e && u) return true;
+        if (e || u) return false;
+        
+        if(a != b) return false;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     if (argc < 2)
@@ -87,7 +145,10 @@ int main(int argc, char* argv[])
         std::string actual = readFile(output_file);
 
         expected = normalize(expected);
+        expected = trim(expected);
+
         actual = normalize(actual);
+        actual = trim(actual);
 
         auto end = std::chrono::high_resolution_clock::now();
         double runtime = std::chrono::duration<double, std::milli>(end - start).count();
@@ -101,12 +162,14 @@ int main(int argc, char* argv[])
 
         if (expected == actual)
         {
-            std::cout << "ACCEPTED\n";
+            std::cout << "\033[32mACCEPTED\033[0m\n";
             std::cout << "Execution time: " << runtime << "ms\n";
         }
         else
         {
-            std::cout << "WRONG ANSWER\n\n";
+            std::cout << "\033[31mWRONG ANSWER\033[0m\n";
+            int line = compare(expected, actual);
+            reportError(inputs.size(), i+1, line);
         }
     }
 
