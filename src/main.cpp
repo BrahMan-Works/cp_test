@@ -15,23 +15,33 @@ std::string readFile(const std::string& path)
     return buffer.str();
 }
 
-std::string normalize(const std::string& text)
+std::vector<std::string> normalizeLines(const std::string& text)
 {
-    std::string result;
-    for (char c : text)
+    std::stringstream ss(text);
+    std::string line;
+    std::vector<std::string> lines;
+
+    while (getline(ss, line))
     {
-        if (c != '\r') result += c;
+        while (!line.empty() && isspace(line.back()))
+        {
+            line.pop_back();
+        }
+
+        lines.push_back(line);
     }
-    return result;
-}
 
-std::string trim(const std::string& s)
-{
-    size_t start = s.find_first_not_of("\n\r\t");
-    size_t end = s.find_last_not_of("\n\r\t");
+    while (!lines.empty() && lines.front().empty())
+    {
+        lines.erase(lines.begin());
+    }
 
-    if (start == std::string::npos) return "";
-    return s.substr(start, end - start + 1);
+    while (!lines.empty() && lines.back().empty())
+    {
+        lines.pop_back();
+    }
+
+    return lines;
 }
 
 void reportError(int total_tests, int test, int line)
@@ -44,43 +54,26 @@ void reportError(int total_tests, int test, int line)
     std::cout << "Mismatch at line " << line << '\n';
 }
 
-int compare(const std::string& expected_path, const std::string& user_path)
+int compareLines(const std::string& expected, const std::string& actual)
 {
-    std::ifstream expected(expected_path);
-    std::ifstream user(user_path);
+    auto e_lines = normalizeLines(expected);
+    auto a_lines = normalizeLines(actual);
 
-    std::string e, u;
-    int line = 1;
+    int n = std::max(e_lines.size(), a_lines.size());
 
-    while (true)
+    for (int i = 0; i < n; ++i)
     {
-        bool e_end = !getline(expected, e);
-        bool u_end = !getline(user, u);
-
-        if(e_end && u_end) return 0;
-
-        if(e != u) return line;
-        line++;
+        if ((i >= e_lines.size()) || (i >= a_lines.size()))
+        {
+            return i+1;
+        }
+        if (e_lines[i] != a_lines[i])
+        {
+            return i+1;
+        }
     }
-}
 
-bool compareOutputs(const std::string& expected_path, const std::string& user_path) //useless for now
-{
-    std::ifstream expected(expected_path);
-    std::ifstream user(user_path);
-
-    std::string a, b;
-
-    while(true)
-    {
-        bool e = !(expected >> a);
-        bool u = !(user >> b);
-
-        if (e && u) return true;
-        if (e || u) return false;
-        
-        if(a != b) return false;
-    }
+    return -1;
 }
 
 int main(int argc, char* argv[])
@@ -122,9 +115,11 @@ int main(int argc, char* argv[])
 
     std::cout << "Running...\n";
     sort(inputs.begin(), inputs.end());
-
+    
     for (int i = 0; i < inputs.size(); ++i)
     {
+        std::cout << "Running test " << i+1 << "...\n";
+
         auto start = std::chrono::high_resolution_clock::now();
         
         std::string input_file = inputs[i];
@@ -139,28 +134,27 @@ int main(int argc, char* argv[])
             std::cout << "Test " << i + 1 << ": RUNTIME ERROR\n";
             continue;
         }
-
-        std::string expected = readFile(".cp_test/output_" + std::to_string(i + 1) + ".txt");
-
-        std::string actual = readFile(output_file);
-
-        expected = normalize(expected);
-        expected = trim(expected);
-
-        actual = normalize(actual);
-        actual = trim(actual);
-
+        
         auto end = std::chrono::high_resolution_clock::now();
         double runtime = std::chrono::duration<double, std::milli>(end - start).count();
-        
-        if (expected.empty())
-        {
-            std::cout << actual << '\n';
-            std::cout << "Execution time: " << runtime << "ms\n";
-            return 0;
-        }
 
-        if (expected == actual)
+        std::string expected_path = ".cp_test/output_" + std::to_string(i + 1) + ".txt";
+        std::string expected;
+
+        if (!std::filesystem::exists(expected_path))
+        {
+            std::cout << "Missing output file for test " << i+1 << '\n';
+        }
+        else
+        {
+            expected = readFile(expected_path);
+        }
+        
+        std::string actual = readFile(output_file);
+        
+        int line = compareLines(expected, actual);
+
+        if (line == -1)
         {
             std::cout << "\033[32mACCEPTED\033[0m\n";
             std::cout << "Execution time: " << runtime << "ms\n";
@@ -168,9 +162,11 @@ int main(int argc, char* argv[])
         else
         {
             std::cout << "\033[31mWRONG ANSWER\033[0m\n";
-            int line = compare(expected, actual);
             reportError(inputs.size(), i+1, line);
         }
+
+        std::cout << "\n----------------\n";
+        std::ofstream(output_file).close();
     }
 
     return 0;
