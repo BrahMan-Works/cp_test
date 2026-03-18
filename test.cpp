@@ -1,56 +1,41 @@
-#include <iostream>
-#include <vector>
-#include <algorithm>
-#include <cstdint>
-
-#define int int64_t
-
-//--------------Pacific_Hues--------------\\
-
-void solve() 
-{
-    int n; 
-    std::cin >> n;
-
-    auto a = std::vector<int>(n + 2, 0);
-    for(int i = 1; i <= n; ++i) 
-    {
-        std::cin >> a[i];
-    }
-
-    auto dp = std::vector<int>(n + 2, 0);
-    for(int i = n; i >= 1; --i) 
-    {
-        if(i & 1) 
-        {
-            int b = a[i];
-            if(i > 1) 
-            {
-                b = std::min(b, a[i - 1]);
-            }
-            if(i < n) 
-            {
-                b = std::min(b, a[i + 1] - dp[i + 2]);
-            }
-            dp[i] = std::max<int>(0, b);
-        }
-    }
-
-    int ans = 0;
-    for(int i = 1; i <= n; i += 2) 
-    {
-        ans += a[i] - dp[i];
-    }
-
-    std::cout << ans << '\n';
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+int solve(){
+	int n;
+	cin >> n;
+	int val=1,sum=0;
+	while(sum+5*val < n){
+		sum += 5*val;
+		val*=2;
+	}
+	int temp = n-sum;
+	int cur=0,ind=0;
+	while(cur+val < temp){
+		cur += val;
+		ind++;
+	}
+	if(ind == 0){
+		cout << "Sheldon\n";
+	}
+	else if(ind == 1){
+		cout << "Leonard\n";
+	}
+	else if(ind==2){
+		cout << "Penny\n";
+	}
+	else if(ind==3){
+		cout << "Rajesh\n";
+	}
+	else{
+		cout << "Howard\n";
+	}
+	return 0;
 }
-
-signed main() 
-{
-    std::ios::sync_with_stdio(false);
-    std::cin.tie(nullptr);
-
-    int t; 
-    std::cin >> t;
-    while(t--) solve();
+signed main(){
+	int t=1;
+	//cin >> t;
+	while(t--){
+		solve();
+	}
 }

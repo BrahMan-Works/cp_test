@@ -101,56 +101,55 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    std::vector<std::string> inputs;
+    std::vector<int> tests;
 
-    for(const auto& entry : std::filesystem::directory_iterator(".cp_test"))
+    for (int i = 1; ; ++i)
     {
-        std::string name = entry.path().filename();
-
-        if (name.find("input_") != std::string::npos)
-        {
-            inputs.push_back(entry.path());
-        }
+        std::string in = ".cp_test/" + std::to_string(i) + ".in";
+        
+        if (!std::filesystem::exists(in)) break;
+        tests.push_back(i);
     }
 
     std::cout << "Running...\n";
-    sort(inputs.begin(), inputs.end());
     
-    for (int i = 0; i < inputs.size(); ++i)
+    for (int t : tests)
     {
-        std::cout << "Running test " << i+1 << "...\n";
+        std::cout << "Running test " << t << "...\n";
+
+        std::string input_path = ".cp_test/" + std::to_string(t) + ".in";
+        std::string output_path = ".cp_test/" + std::to_string(t) + ".out";
+        
+        std::string output_file = ".cp_test/user_output.txt";
 
         auto start = std::chrono::high_resolution_clock::now();
         
-        std::string input_file = inputs[i];
-        std::string output_file = ".cp_test/user_output.txt";
-
-        std::string run_cmd = "./solution < " + input_file + " > " + output_file;
+        std::string run_cmd = "./solution < " + input_path + " > " + output_file;
 
         int run_status = std::system(run_cmd.c_str());
 
         if(run_status != 0)
         {
-            std::cout << "Test " << i + 1 << ": RUNTIME ERROR\n";
+            std::cout << "Test " << t << ": RUNTIME ERROR\n";
             continue;
         }
         
         auto end = std::chrono::high_resolution_clock::now();
         double runtime = std::chrono::duration<double, std::milli>(end - start).count();
 
-        std::string expected_path = ".cp_test/output_" + std::to_string(i + 1) + ".txt";
+        std::string expected_path = ".cp_test/" + std::to_string(t) + ".out";
         std::string expected;
-
+        std::string actual = readFile(output_file);
+        
         if (!std::filesystem::exists(expected_path))
         {
-            std::cout << "Missing output file for test " << i+1 << '\n';
+            std::cout << "Test " << t << " (no expected output)\n";
+            std::cout << actual << '\n';
         }
         else
         {
             expected = readFile(expected_path);
         }
-        
-        std::string actual = readFile(output_file);
         
         int line = compareLines(expected, actual);
 
@@ -162,7 +161,7 @@ int main(int argc, char* argv[])
         else
         {
             std::cout << "\033[31mWRONG ANSWER\033[0m\n";
-            reportError(inputs.size(), i+1, line);
+            reportError(tests.size(), t, line);
         }
 
         std::cout << "\n----------------\n";
