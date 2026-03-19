@@ -12,3 +12,10 @@ a.out
 
 # OS junk
 .DS_Store
+node_modules/
+dist/
+out/
+.vscode-test/
+*.vsix
+
+.env
